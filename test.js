@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const {parse,clean,encode,defaults}=require('./engine');
+const input=parse('\uFEFFid,value\r\n001," A, ""B"" "\r\n001,"A, ""B"""\r\n002,"x\ny"\r\n003,NA\r\n,\r\n',',');
+const output=clean(input,{...defaults,tokens:true});
+assert.deepEqual(output.rows,[['001','A, "B"'],['002','x\ny'],['003','']]);
+assert.deepEqual(output.changes,{trim:1,tokens:1,dedupe:1,blank:1});
+assert.equal(input.rows.length,5);
+assert.deepEqual(parse(encode(output),',').rows,output.rows);
+assert.deepEqual(parse('id\tv\n1\t"hello\tworld"','\t').rows,[['1','hello\tworld']]);
+assert.deepEqual(clean(input,{trim:false,blank:false,dedupe:false,tokens:false}).rows,input.rows);
+assert.deepEqual(parse('a,b\n',',').rows,[]);
+for(const text of ['','a,b\n1','a,b\n1,2,3','a\n"x','a\n"x"y','a\nx"y'])assert.throws(()=>parse(text,','));
+console.log('CSV/TSV, quoting, cleaning, preservation, and malformed-input checks passed.');
